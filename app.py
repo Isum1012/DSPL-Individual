@@ -6,17 +6,17 @@ import io
 
 #Set style
 sns.set(style="whitegrid")
-# plt.style.use('seaborn-v0_8-darkgrid') # Optional: Choose a style
+# plt.style.use('seaborn-v0_8-darkgrid') 
 
 # Configure Streamlit page
 st.set_page_config(page_title="Sri Lanka Indicator Analysis", layout="wide")
 st.title(" Sri Lanka Indicator Analysis")
 
-# --- Define file path ONCE ---
+# Define file path ONCE
 FILE_PATH = r"C:\Users\admin\Desktop\DSPL Individual\DSPL-Individual\trade_lka.csv"
-# --- ---
 
-# Load dataset
+
+#Load dataset
 @st.cache_data
 def load_data(path):
     """Loads data from the specified CSV file path, skipping the HXL row."""
@@ -45,11 +45,10 @@ def load_data(path):
 @st.cache_data # Cache the conversion if the dataframe doesn't change
 def convert_df_to_csv(df_to_convert):
     """Converts a DataFrame to a CSV string for download."""
-    # IMPORTANT: Cache the conversion to prevent computation on every rerun
-    # Use index=False to avoid writing the DataFrame index as a column
+# Use index=False to avoid writing the DataFrame index as a column
     return df_to_convert.to_csv(index=False).encode('utf-8')
 
-# --- Main Script Logic ---
+# Main Script Logic 
 df = load_data(FILE_PATH)
 
 if df is not None and not df.empty:
@@ -71,7 +70,7 @@ if df is not None and not df.empty:
     indicator_df = df[df['Indicator Name'] == selected_indicator].copy()
     indicator_df = indicator_df.sort_values('Year')
 
-    # --- Sidebar Navigation ---
+    #Sidebar Navigation 
     st.sidebar.title("Analysis Options")
     analysis_types = ["Line Chart", "Bar Chart", "Scatter Plot", "Box Plot", "Histogram", "Area Chart", "Statistics"]
     analysis_choice = st.sidebar.radio(
@@ -153,8 +152,8 @@ if df is not None and not df.empty:
             st.dataframe(indicator_df[['Year', 'Value', 'Indicator Code']].reset_index(drop=True).style.format({'Value': '{:,.2f}', 'Year': '{:.0f}'}))
 
         # --- Add Download Button (only if data exists) ---
-        if not indicator_df.empty and analysis_choice != "Statistics": # Don't show after just stats table maybe? Or keep it always visible when data exists.
-            st.markdown("---") # Add a separator
+        if not indicator_df.empty and analysis_choice != "Statistics": 
+            st.markdown("---") 
             # Prepare data for download
             csv_data = convert_df_to_csv(indicator_df[['Year', 'Indicator Name', 'Indicator Code', 'Value']]) # Select relevant columns
 
