@@ -10,6 +10,22 @@ sns.set(style="whitegrid")
 st.set_page_config(page_title="Sri Lanka Trade Dashboard", layout="wide")
 st.title("Sri Lanka Trade Indicator Analysis")
 
+# About section
+with st.sidebar.markdown("ℹ About this Dashboard"):
+    st.sidebar.info("""
+    This interactive dashboard presents key trade indicators for *Sri Lanka* using World Bank data.  
+    It enables policymakers, researchers and the public to explore trends over time and gain insights into the country's economic relationships.
+
+    *Indicators Covered:*
+    - Merchandise exports (current US$)
+    - Merchandise imports (current US$)
+    - Merchandise trade (% of GDP)
+    - Regional exports (East Asia & Pacific)
+    - Imports from high-income economies
+
+    👇 Use the controls to change chart types and explore specific indicators.
+    """)
+
 # Define file path
 FILE_PATH = r"C:\Users\admin\Desktop\DSPL Individual\DSPL-Individual\trade_lka.csv"
 
@@ -35,7 +51,7 @@ def convert_df_to_csv(df_to_convert):
 # Load and filter data
 df = load_data(FILE_PATH)
 
-#Define 5 key indicators
+# Define 5 key indicators
 KEY_INDICATORS = [
     "Merchandise exports (current US$)",
     "Merchandise imports (current US$)",
@@ -53,8 +69,8 @@ if df.empty:
 
 # Sidebar
 st.sidebar.title("Analysis Options")
-analysis_types = ["Line Chart", "Bar Chart", "Scatter Plot", "Box Plot", "Histogram", "Area Chart", "Statistics"]
-analysis_choice = st.sidebar.radio("Select Analysis Type:", analysis_types)
+chart_types = ["Line Chart", "Bar Chart", "Scatter Plot", "Box Plot", "Histogram", "Area Chart", "Statistics"]
+analysis_choice = st.sidebar.radio("Select Chart Type:", chart_types)
 
 # Indicator selection
 selected_indicator = st.selectbox("Select an Indicator to Analyze", sorted(df['Indicator Name'].unique()))
@@ -63,6 +79,15 @@ selected_indicator = st.selectbox("Select an Indicator to Analyze", sorted(df['I
 indicator_df = df[df['Indicator Name'] == selected_indicator].sort_values('Year')
 
 st.subheader(f"{analysis_choice} for: {selected_indicator}")
+
+# KPI Metrics
+if not indicator_df.empty:
+    col1, col2, col3 = st.columns(3)
+    col1.metric("🔺 Max Value", f"{indicator_df['Value'].max():,.2f}")
+    col2.metric("🔻 Min Value", f"{indicator_df['Value'].min():,.2f}")
+    col3.metric("📊 Average", f"{indicator_df['Value'].mean():,.2f}")
+
+# Chart rendering
 fig = None
 
 if indicator_df.empty:
@@ -134,4 +159,4 @@ else:
 
 # Sidebar footer
 st.sidebar.markdown("---")
-st.sidebar.markdown("📌 *Sri Lanka Trade Dashboard*")
+st.sidebar.markdown("📌 Sri Lanka Trade Dashboard")
