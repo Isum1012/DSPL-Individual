@@ -10,7 +10,7 @@ sns.set(style="whitegrid")
 st.set_page_config(page_title="Sri Lanka Trade Dashboard", layout="wide")
 st.title("Sri Lanka Trade Indicator Analysis")
 
-# About section
+# About section 
 with st.sidebar.markdown("ℹ About this Dashboard"):
     st.sidebar.info("""
     This interactive dashboard presents key trade indicators for *Sri Lanka* using World Bank data.  
@@ -159,4 +159,4 @@ else:
 
 # Sidebar footer
 st.sidebar.markdown("---")
-st.sidebar.markdown("📌 Sri Lanka Trade Dashboard")
+st.sidebar.markdown(" 📈 Sri Lanka Trade Dashboard")
