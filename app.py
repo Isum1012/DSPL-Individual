@@ -2,187 +2,136 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import io 
 
-#Set style
+# Set style
 sns.set(style="whitegrid")
-# plt.style.use('seaborn-v0_8-darkgrid') 
 
 # Configure Streamlit page
-st.set_page_config(page_title="Sri Lanka Indicator Analysis", layout="wide")
-st.title(" Sri Lanka Indicator Analysis")
+st.set_page_config(page_title="Sri Lanka Trade Dashboard", layout="wide")
+st.title("Sri Lanka Trade Indicator Analysis")
 
-# Define file path ONCE
+# Define file path
 FILE_PATH = r"C:\Users\admin\Desktop\DSPL Individual\DSPL-Individual\trade_lka.csv"
 
-
-#Load dataset
+# Load dataset
 @st.cache_data
 def load_data(path):
-    """Loads data from the specified CSV file path, skipping the HXL row."""
     try:
         df = pd.read_csv(path, skiprows=[1])
-        if 'Year' in df.columns:
-            df['Year'] = pd.to_numeric(df['Year'], errors='coerce')
-        if 'Value' in df.columns:
-            df['Value'] = pd.to_numeric(df['Value'], errors='coerce')
-        if 'Indicator Name' in df.columns:
-             df['Indicator Name'] = df['Indicator Name'].astype(str)
+        df['Year'] = pd.to_numeric(df['Year'], errors='coerce')
+        df['Value'] = pd.to_numeric(df['Value'], errors='coerce')
+        df['Indicator Name'] = df['Indicator Name'].astype(str)
         df.dropna(subset=['Year', 'Value'], inplace=True)
         return df
-    except FileNotFoundError:
-         st.error(f"❌ File not found at {path}. Please check the path.")
-         return None
-    except pd.errors.EmptyDataError:
-         st.error(f"❌ The CSV file is empty: {path}")
-         return None
     except Exception as e:
-        st.error(f"Failed to load or process CSV: {e}")
-        st.exception(e)
-        return None
+        st.error(f"Error loading file: {e}")
+        return pd.DataFrame()
 
-# Function to convert DataFrame to CSV for download
-@st.cache_data # Cache the conversion if the dataframe doesn't change
+# Function to convert DataFrame to CSV
+@st.cache_data
 def convert_df_to_csv(df_to_convert):
-    """Converts a DataFrame to a CSV string for download."""
-# Use index=False to avoid writing the DataFrame index as a column
     return df_to_convert.to_csv(index=False).encode('utf-8')
 
-# Main Script Logic 
+# Load and filter data
 df = load_data(FILE_PATH)
 
-if df is not None and not df.empty:
+#Define 5 key indicators
+KEY_INDICATORS = [
+    "Merchandise exports (current US$)",
+    "Merchandise imports (current US$)",
+    "Merchandise trade (% of GDP)",
+    "Merchandise exports to low- and middle-income economies in East Asia & Pacific (% of total merchandise exports)",
+    "Merchandise imports from high-income economies (% of total merchandise imports)"
+]
 
-    required_cols = ['Indicator Name', 'Year', 'Value']
-    if not all(col in df.columns for col in required_cols):
-        st.error(f"Required columns ({', '.join(required_cols)}) not found in the CSV after loading.")
-        st.stop()
+# Filter dataset
+df = df[df['Indicator Name'].isin(KEY_INDICATORS)].copy()
 
-    # --- Indicator Selection (Main Area) ---
-    indicator_options = sorted(df['Indicator Name'].unique())
-    selected_indicator = st.selectbox(
-        "Select an Indicator to Analyze",
-        indicator_options,
-        index=0
-    )
+if df.empty:
+    st.error("No data available after filtering for the selected indicators.")
+    st.stop()
 
-    # --- Filter Data for Selected Indicator ---
-    indicator_df = df[df['Indicator Name'] == selected_indicator].copy()
-    indicator_df = indicator_df.sort_values('Year')
+# Sidebar
+st.sidebar.title("Analysis Options")
+analysis_types = ["Line Chart", "Bar Chart", "Scatter Plot", "Box Plot", "Histogram", "Area Chart", "Statistics"]
+analysis_choice = st.sidebar.radio("Select Analysis Type:", analysis_types)
 
-    #Sidebar Navigation 
-    st.sidebar.title("Analysis Options")
-    analysis_types = ["Line Chart", "Bar Chart", "Scatter Plot", "Box Plot", "Histogram", "Area Chart", "Statistics"]
-    analysis_choice = st.sidebar.radio(
-        "Select Analysis Type:",
-        analysis_types
-    )
+# Indicator selection
+selected_indicator = st.selectbox("Select an Indicator to Analyze", sorted(df['Indicator Name'].unique()))
 
-    # --- Display Selected Analysis (Main Area) ---
-    st.subheader(f"{analysis_choice} for: {selected_indicator}")
+# Filter data for selected indicator
+indicator_df = df[df['Indicator Name'] == selected_indicator].sort_values('Year')
 
-    # Placeholder for the figure object
-    fig = None
+st.subheader(f"{analysis_choice} for: {selected_indicator}")
+fig = None
 
-    if indicator_df.empty:
-        st.warning("No data available for this indicator.")
-    else:
-        # Conditional Plotting based on Sidebar Choice
-        if analysis_choice == "Line Chart":
-            fig, ax = plt.subplots(figsize=(10, 4))
-            sns.lineplot(data=indicator_df, x='Year', y='Value', marker='o', ax=ax)
-            ax.set_title(f"Trend Over Time")
-            ax.set_xlabel("Year")
-            ax.set_ylabel("Value")
-            plt.tight_layout()
-            st.pyplot(fig)
-
-        elif analysis_choice == "Bar Chart":
-            fig, ax = plt.subplots(figsize=(10, 4))
-            indicator_df['Year_str'] = indicator_df['Year'].astype(int).astype(str)
-            sns.barplot(data=indicator_df, x='Year_str', y='Value', ax=ax, color='skyblue')
-            ax.set_title(f"Value Each Year")
-            ax.set_xlabel("Year")
-            ax.set_ylabel("Value")
-            plt.xticks(rotation=45, ha='right')
-            plt.tight_layout()
-            st.pyplot(fig)
-
-        elif analysis_choice == "Scatter Plot":
-            fig, ax = plt.subplots(figsize=(10, 4))
-            sns.scatterplot(data=indicator_df, x='Year', y='Value', ax=ax)
-            ax.set_title(f"Scatter Plot")
-            ax.set_xlabel("Year")
-            ax.set_ylabel("Value")
-            plt.tight_layout()
-            st.pyplot(fig)
-
-        elif analysis_choice == "Box Plot":
-            fig, ax = plt.subplots(figsize=(6, 4))
-            sns.boxplot(data=indicator_df, y='Value', ax=ax, color='lightgreen')
-            ax.set_title(f"Value Distribution")
-            ax.set_ylabel("Value")
-            ax.set_xticklabels([])
-            plt.tight_layout()
-            st.pyplot(fig)
-
-        elif analysis_choice == "Histogram":
-            fig, ax = plt.subplots(figsize=(10, 4))
-            sns.histplot(data=indicator_df, x='Value', kde=True, ax=ax, bins=10)
-            ax.set_title(f"Value Frequency Distribution")
-            ax.set_xlabel("Value")
-            ax.set_ylabel("Frequency")
-            plt.tight_layout()
-            st.pyplot(fig)
-
-        elif analysis_choice == "Area Chart":
-            fig, ax = plt.subplots(figsize=(10, 4))
-            ax.fill_between(indicator_df['Year'], indicator_df['Value'], alpha=0.4, color='tomato')
-            sns.lineplot(data=indicator_df, x='Year', y='Value', marker='.', ax=ax, color='darkred', linewidth=0.8)
-            ax.set_title(f"Trend Over Time (Area)")
-            ax.set_xlabel("Year")
-            ax.set_ylabel("Value")
-            plt.tight_layout()
-            st.pyplot(fig)
-
-        elif analysis_choice == "Statistics":
-            st.write("Basic Statistics for 'Value':")
-            st.dataframe(indicator_df['Value'].describe().to_frame())
-            st.write("Data Points:")
-            st.dataframe(indicator_df[['Year', 'Value', 'Indicator Code']].reset_index(drop=True).style.format({'Value': '{:,.2f}', 'Year': '{:.0f}'}))
-
-        # --- Add Download Button (only if data exists) ---
-        if not indicator_df.empty and analysis_choice != "Statistics": 
-            st.markdown("---") 
-            # Prepare data for download
-            csv_data = convert_df_to_csv(indicator_df[['Year', 'Indicator Name', 'Indicator Code', 'Value']]) # Select relevant columns
-
-            # Sanitize filename
-            safe_indicator_name = "".join([c if c.isalnum() else "_" for c in selected_indicator])[:50] # Keep it short and alphanumeric
-            download_filename = f"{safe_indicator_name}_data.csv"
-
-            st.download_button(
-                label="📥 Download Data as CSV",
-                data=csv_data,
-                file_name=download_filename,
-                mime='text/csv',
-            )
-        elif not indicator_df.empty and analysis_choice == "Statistics":
-             # Optionally show download button after statistics too
-             st.markdown("---")
-             csv_data = convert_df_to_csv(indicator_df[['Year', 'Indicator Name', 'Indicator Code', 'Value']])
-             safe_indicator_name = "".join([c if c.isalnum() else "_" for c in selected_indicator])[:50]
-             download_filename = f"{safe_indicator_name}_data.csv"
-             st.download_button(
-                label="📥 Download Data as CSV",
-                data=csv_data,
-                file_name=download_filename,
-                mime='text/csv',
-            )
-
-
+if indicator_df.empty:
+    st.warning("No data for the selected indicator.")
 else:
-    st.error("Failed to load or process the data file. Cannot display dashboard.")
+    if analysis_choice == "Line Chart":
+        fig, ax = plt.subplots(figsize=(10, 4))
+        sns.lineplot(data=indicator_df, x='Year', y='Value', marker='o', ax=ax)
+        ax.set_title("Trend Over Time")
+        ax.set_xlabel("Year")
+        ax.set_ylabel("Value")
+        st.pyplot(fig)
 
+    elif analysis_choice == "Bar Chart":
+        fig, ax = plt.subplots(figsize=(10, 4))
+        indicator_df['Year_str'] = indicator_df['Year'].astype(int).astype(str)
+        sns.barplot(data=indicator_df, x='Year_str', y='Value', ax=ax, color='skyblue')
+        ax.set_title("Value Each Year")
+        ax.set_xlabel("Year")
+        ax.set_ylabel("Value")
+        plt.xticks(rotation=45, ha='right')
+        st.pyplot(fig)
+
+    elif analysis_choice == "Scatter Plot":
+        fig, ax = plt.subplots(figsize=(10, 4))
+        sns.scatterplot(data=indicator_df, x='Year', y='Value', ax=ax)
+        ax.set_title("Scatter Plot")
+        ax.set_xlabel("Year")
+        ax.set_ylabel("Value")
+        st.pyplot(fig)
+
+    elif analysis_choice == "Box Plot":
+        fig, ax = plt.subplots(figsize=(6, 4))
+        sns.boxplot(data=indicator_df, y='Value', ax=ax, color='lightgreen')
+        ax.set_title("Value Distribution")
+        ax.set_ylabel("Value")
+        ax.set_xticklabels([])
+        st.pyplot(fig)
+
+    elif analysis_choice == "Histogram":
+        fig, ax = plt.subplots(figsize=(10, 4))
+        sns.histplot(data=indicator_df, x='Value', kde=True, ax=ax, bins=10)
+        ax.set_title("Value Frequency Distribution")
+        ax.set_xlabel("Value")
+        ax.set_ylabel("Frequency")
+        st.pyplot(fig)
+
+    elif analysis_choice == "Area Chart":
+        fig, ax = plt.subplots(figsize=(10, 4))
+        ax.fill_between(indicator_df['Year'], indicator_df['Value'], alpha=0.4, color='tomato')
+        sns.lineplot(data=indicator_df, x='Year', y='Value', marker='.', ax=ax, color='darkred', linewidth=0.8)
+        ax.set_title("Trend Over Time (Area)")
+        ax.set_xlabel("Year")
+        ax.set_ylabel("Value")
+        st.pyplot(fig)
+
+    elif analysis_choice == "Statistics":
+        st.write("Basic Statistics:")
+        st.dataframe(indicator_df['Value'].describe().to_frame())
+        st.write("All Data Points:")
+        st.dataframe(indicator_df[['Year', 'Value', 'Indicator Code']].reset_index(drop=True).style.format({'Value': '{:,.2f}'}))
+
+    # CSV Download
+    st.markdown("---")
+    csv_data = convert_df_to_csv(indicator_df[['Year', 'Indicator Name', 'Indicator Code', 'Value']])
+    safe_name = "".join([c if c.isalnum() else "_" for c in selected_indicator])[:50]
+    file_name = f"{safe_name}_data.csv"
+    st.download_button("📥 Download Data as CSV", data=csv_data, file_name=file_name, mime='text/csv')
+
+# Sidebar footer
 st.sidebar.markdown("---")
-st.sidebar.markdown("📌 *Dashboard using Sri Lanka Trade Data*")
+st.sidebar.markdown("📌 *Sri Lanka Trade Dashboard*")
