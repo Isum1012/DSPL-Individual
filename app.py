@@ -27,7 +27,7 @@ with st.sidebar.markdown("ℹ About this Dashboard"):
     """)
 
 # Define file path
-FILE_PATH = r"C:\Users\admin\Desktop\DSPL Individual\DSPL-Individual\cleaned_dataset.csv"
+FILE_PATH = r"cleaned_dataset.csv"
 
 # Load dataset
 @st.cache_data
