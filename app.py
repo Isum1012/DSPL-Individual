@@ -7,7 +7,7 @@ import seaborn as sns
 sns.set(style="whitegrid")
 
 # Configure Streamlit page
-st.set_page_config(page_title="Sri Lanka Trade Dashboard", layout="wide")
+st.set_page_config(page_title="Sri Lanka Trade Indicator Dashboard", layout="wide")
 st.title("Sri Lanka Trade Indicator Analysis")
 
 # About section 
@@ -159,4 +159,4 @@ else:
 
 # Sidebar footer
 st.sidebar.markdown("---")
-st.sidebar.markdown(" 📈 Sri Lanka Trade Dashboard")
+st.sidebar.markdown(" 📈 Sri Lanka Trade  Indicator Dashboard")
